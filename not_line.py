@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -10,61 +8,32 @@ import scipy.optimize as op
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 
+data = [[3.368,-18.435,0.087],[4.618,-17.042,0.087],[12.082,-15.728,0.087],[22.194,-16.307,0.087
+],[3.6,-18.063,0.043],[4.5,-17.173,0.043]]
+
+x = np.asarray([3.368, 4.618, 12.082, 22.194, 3.6, 4.5])
+y=[]
+yerr=[]
+"""for each in data:
+    x.append(each[0])
+    y.append(each[1])
+    yerr.append(each[2])
+"""
+print(x)
+
 # Reproducible results!
 np.random.seed(123)
 
-# Choose the "true" parameters.
-m_true = -0.9594
-b_true = 4.294
-f_true = 0.534
+h = 6.626070040*(10**(-34))  #J*s
+c = 299792458 #m/s
+k_b = 1.38064852*(10**(-23))  #m^2*kg*s^-2*K^-1
+e = 2.71828182845
 
-# Generate some synthetic data from the model.
+a = 2*h*(c**2)
+b = (h*c)/k_b
 
-y_list = []
-x_list = []
-yerr_list = []
-
-N = 50
-x = np.sort(10*np.random.rand(N))
-yerr = 0.1+0.5*np.random.rand(N)
-y = m_true*x+b_true
-y += np.abs(f_true*y) * np.random.randn(N)
-y += yerr * np.random.randn(N)
-
-print(yerr)
-
-"""
-y_list.append(y)
-x_list.append(x)
-yerr_list.append(yerr)
-
-print(y_list)
-print(x_list)
-print(yerr_list)
-"""
-# Plot the dataset and the true model.
-xl = np.array([0, 10])
-pl.errorbar(x, y, yerr=yerr, fmt=".k")
-pl.plot(xl, m_true*xl+b_true, "k", lw=3, alpha=0.6)
-pl.ylim(-9, 9)
-pl.xlabel("$x$")
-pl.ylabel("$y$")
-pl.tight_layout()
-pl.savefig("line-data.png")
-
-# Do the least-squares fit and compute the uncertainties.
-A = np.vstack((np.ones_like(x), x)).T
-C = np.diag(yerr * yerr)
-cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-b_ls, m_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
-print("""Least-squares results:
-    m = {0} ± {1} (truth: {2})
-    b = {3} ± {4} (truth: {5})
-""".format(m_ls, np.sqrt(cov[1, 1]), m_true, b_ls, np.sqrt(cov[0, 0]), b_true))
-
-# Plot the least-squares result.
-pl.plot(xl, m_ls*xl+b_ls, "--k")
-pl.savefig("line-least-squares.png")
+#x : wavelength in um
+#Planck's Function = (a/x**5)*(1/((e**(b/(x*T))-1)))
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
@@ -75,7 +44,7 @@ def lnprior(theta):
 
 def lnlike(theta, x, y, yerr):
     m, b, lnf = theta
-    model = m * x + b
+    model = np.log10((a/x**5)*(1/((e**(b/(x*T))-1))))
     inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
@@ -85,15 +54,17 @@ def lnprob(theta, x, y, yerr):
         return -np.inf
     return lp + lnlike(theta, x, y, yerr)
 
+
 # Find the maximum likelihood value.
-chi2 = lambda *args: -2 * lnlike(*args)
-result = op.minimize(chi2, [m_true, b_true, np.log(f_true)], args=(x, y, yerr))
+zzz = [3.368,-18.435,0.087]
+chi2 = lambda zzz: -2 * lnlike(zzz)
+result = op.minimize(chi2,0,args=(zzz))
 m_ml, b_ml, lnf_ml = result["x"]
 print("""Maximum likelihood result:
-    m = {0} (truth: {1})
-    b = {2} (truth: {3})
-    f = {4} (truth: {5})
-""".format(m_ml, m_true, b_ml, b_true, np.exp(lnf_ml), f_true))
+    m = {0}
+    b = {2}
+    f = {4}
+""".format(m_ml, b_ml, np.exp(lnf_ml)))
 
 # Plot the maximum likelihood result.
 pl.plot(xl, m_ml*xl+b_ml, "k", lw=2)
@@ -155,7 +126,7 @@ samples[:, 2] = np.exp(samples[:, 2])
 m_mcmc, b_mcmc, f_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0)))
-print("""MCMC result:
+print("""#MCMC result:
     m = {0[0]} +{0[1]} -{0[2]} (truth: {1})
     b = {2[0]} +{2[1]} -{2[2]} (truth: {3})
     f = {4[0]} +{4[1]} -{4[2]} (truth: {5})

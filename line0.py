@@ -18,6 +18,15 @@ m_true = -0.9594
 b_true = 4.294
 f_true = 0.534
 
+
+data = [[3.368,-18.435,0.087],[4.618,-17.042,0.087],[12.082,-15.728,0.087],[22.194,-16.307,0.087
+],[3.6,-18.063,0.043],[4.5,-17.173,0.043]]
+
+x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])
+y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173])
+yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043])
+
+"""
 # Generate some synthetic data from the model.
 
 y_list = []
@@ -30,17 +39,6 @@ yerr = 0.1+0.5*np.random.rand(N)
 y = m_true*x+b_true
 y += np.abs(f_true*y) * np.random.randn(N)
 y += yerr * np.random.randn(N)
-
-print(yerr)
-
-"""
-y_list.append(y)
-x_list.append(x)
-yerr_list.append(yerr)
-
-print(y_list)
-print(x_list)
-print(yerr_list)
 """
 # Plot the dataset and the true model.
 xl = np.array([0, 10])
@@ -57,9 +55,7 @@ A = np.vstack((np.ones_like(x), x)).T
 C = np.diag(yerr * yerr)
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
 b_ls, m_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
-print("""Least-squares results:
-    m = {0} ± {1} (truth: {2})
-    b = {3} ± {4} (truth: {5})
+print("""
 """.format(m_ls, np.sqrt(cov[1, 1]), m_true, b_ls, np.sqrt(cov[0, 0]), b_true))
 
 # Plot the least-squares result.
@@ -86,6 +82,7 @@ def lnprob(theta, x, y, yerr):
     return lp + lnlike(theta, x, y, yerr)
 
 # Find the maximum likelihood value.
+print([m_true, b_true, np.log(f_true)])
 chi2 = lambda *args: -2 * lnlike(*args)
 result = op.minimize(chi2, [m_true, b_true, np.log(f_true)], args=(x, y, yerr))
 m_ml, b_ml, lnf_ml = result["x"]

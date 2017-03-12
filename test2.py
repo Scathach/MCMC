@@ -10,6 +10,9 @@ import scipy.optimize as op
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 
+data = [[3.368,-18.435,0.087],[4.618,-17.042,0.087],[12.082,-15.728,0.087],[22.194,-16.307,0.087
+],[3.6,-18.063,0.043],[4.5,-17.173,0.043]]
+
 # Reproducible results!
 np.random.seed(123)
 
@@ -30,8 +33,6 @@ yerr = 0.1+0.5*np.random.rand(N)
 y = m_true*x+b_true
 y += np.abs(f_true*y) * np.random.randn(N)
 y += yerr * np.random.randn(N)
-
-print(yerr)
 
 """
 y_list.append(y)
@@ -86,6 +87,7 @@ def lnprob(theta, x, y, yerr):
     return lp + lnlike(theta, x, y, yerr)
 
 # Find the maximum likelihood value.
+print([m_true, b_true, np.log(f_true)])
 chi2 = lambda *args: -2 * lnlike(*args)
 result = op.minimize(chi2, [m_true, b_true, np.log(f_true)], args=(x, y, yerr))
 m_ml, b_ml, lnf_ml = result["x"]
@@ -102,7 +104,7 @@ pl.savefig("line-max-likelihood.png")
 # Set up the sampler.
 ndim, nwalkers = 3, 100
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=data[0])
 
 # Clear and run the production chain.
 print("Running MCMC...")

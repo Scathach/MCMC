@@ -53,7 +53,6 @@ pl.savefig("line-data.png")
 
 # Do the least-squares fit and compute the uncertainties.
 A = np.vstack((np.ones_like(x), x)).T
-
 C = np.diag(yerr * yerr)
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
 b_ls, m_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))

@@ -36,7 +36,7 @@ a = 2*h*(c**2)
 b = (h*c)/k_b
 
 # Plot the dataset and the true model.
-xl = np.array([.00000000000000000000001, 10])
+xl = np.array([.0001, 10])
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
 #pl.plot(xl, m_true*xl+b_true, "k", lw=3, alpha=0.6)
 #pl.ylim(-9, 9)
@@ -51,11 +51,12 @@ C = np.diag(yerr * yerr)
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
 T_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
 
-print("""
-""".format(T_ls, np.sqrt(cov[1, 1]), "IDONNOEITHER"))
+print("""Least-squares results:
+    T = {0} ± {1} (truth: {2})
+""".format(T_ls[0], np.sqrt(cov[1, 1]), "IDONNOEITHER"))
 # Plot the least-squares result.
-print((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))),"this is xl")
-pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))), "--k")
+#print((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))),"this is it")
+pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls[0]))-1))), "--k")
 pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
@@ -131,8 +132,8 @@ fig.savefig("line-triangle.png")
 
 # Plot some samples onto the data.
 pl.figure()
-for m, b, lnf in samples[np.random.randint(len(samples), size=100)]:
-    pl.plot(xl, m*xl+b, color="k", alpha=0.1)
+for a, T_ls, lnf in samples[np.random.randint(len(samples), size=100)]:
+    pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls[0]))-1))), color="k", alpha=0.1)
 pl.plot(xl, m_true*xl+b_true, color="r", lw=2, alpha=0.8)
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
 pl.xlabel("$x$")

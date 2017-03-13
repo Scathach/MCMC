@@ -58,13 +58,13 @@ pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
-    m, T, lnf = theta
-    if -5.0 < m < 0.5 and 0.0 < T < 10.0 and -10.0 < lnf < 1.0:
+    T, lnf = theta
+    if 0.0 < T < 60000.0 and -10.0 < lnf < 1.0:
         return 0.0
     return -np.inf
 
 def lnlike(theta, x, y, yerr):
-    m, T, lnf = theta
+    T, lnf = theta
     model = (a/x**5)*(1/((e**(b/(x*T))-1)))
     inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
@@ -135,7 +135,6 @@ for m, b, lnf in samples[np.random.randint(len(samples), size=100)]:
     pl.plot(xl, m*xl+b, color="k", alpha=0.1)
 pl.plot(xl, m_true*xl+b_true, color="r", lw=2, alpha=0.8)
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
-pl.ylim(-9, 9)
 pl.xlabel("$x$")
 pl.ylabel("$y$")
 pl.tight_layout()

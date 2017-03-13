@@ -59,7 +59,7 @@ pl.savefig("line-least-squares.png")
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
     m, T, lnf = theta
-    if -5.0 < m < 0.5 and 0.0 < T < 10.0 and -10.0 < lnf < 1.0:
+    if -5.0 < m < 0.5 and 0.0 < T < 60000.0 and -10.0 < lnf < 1.0:
         return 0.0
     return -np.inf
 
@@ -135,7 +135,6 @@ for m, b, lnf in samples[np.random.randint(len(samples), size=100)]:
     pl.plot(xl, m*xl+b, color="k", alpha=0.1)
 pl.plot(xl, m_true*xl+b_true, color="r", lw=2, alpha=0.8)
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
-pl.ylim(-9, 9)
 pl.xlabel("$x$")
 pl.ylabel("$y$")
 pl.tight_layout()

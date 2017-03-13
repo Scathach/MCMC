@@ -31,7 +31,6 @@ y = m_true*x+b_true
 y += np.abs(f_true*y) * np.random.randn(N)
 y += yerr * np.random.randn(N)
 
-print(yerr)
 
 """
 y_list.append(y)
@@ -54,6 +53,7 @@ pl.savefig("line-data.png")
 
 # Do the least-squares fit and compute the uncertainties.
 A = np.vstack((np.ones_like(x), x)).T
+
 C = np.diag(yerr * yerr)
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
 b_ls, m_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
@@ -63,13 +63,13 @@ print("""Least-squares results:
 """.format(m_ls, np.sqrt(cov[1, 1]), m_true, b_ls, np.sqrt(cov[0, 0]), b_true))
 
 # Plot the least-squares result.
+print(m_ls*xl+b_ls,"this is it")
 pl.plot(xl, m_ls*xl+b_ls, "--k")
 pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
     m, b, lnf = theta
-    print(b)
     if -5.0 < m < 0.5 and 0.0 < b < 10.0 and -10.0 < lnf < 1.0:
         return 0.0
     return -np.inf

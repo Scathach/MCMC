@@ -9,6 +9,8 @@ import numpy as np
 import scipy.optimize as op
 import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
+np.seterr(divide='ignore', invalid='ignore')
+np.seterr(over='ignore', invalid='ignore')
 
 # Reproducible results!
 np.random.seed(123)
@@ -29,13 +31,12 @@ yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043])
 h = 6.626070040*(10**(-34))  #J*s
 c = 299792458 #m/s
 k_b = 1.38064852*(10**(-23))  #m^2*kg*s^-2*K^-1
-e = 2.71828182845
 
 a = 2*h*(c**2)
 b = (h*c)/k_b
 
 # Plot the dataset and the true model.
-xl = np.array([0, 10])
+xl = np.array([.00000000000000000000001, 10])
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
 #pl.plot(xl, m_true*xl+b_true, "k", lw=3, alpha=0.6)
 #pl.ylim(-9, 9)
@@ -48,24 +49,25 @@ pl.savefig("line-data.png")
 A = np.vstack((np.ones_like(x), x)).T
 C = np.diag(yerr * yerr)
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-b_ls, m_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
-print("""
-""".format(m_ls, np.sqrt(cov[1, 1]), m_true, b_ls, np.sqrt(cov[0, 0]), b_true))
+T_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
 
+print("""
+""".format(T_ls, np.sqrt(cov[1, 1]), "IDONNOEITHER"))
 # Plot the least-squares result.
-pl.plot(xl, m_ls*xl+b_ls, "--k")
+print((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))),"this is xl")
+pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))), "--k")
 pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
-    T, lnf = theta
+    a, T, lnf = theta
     if 0.0 < T < 60000.0 and -10.0 < lnf < 1.0:
         return 0.0
     return -np.inf
 
 def lnlike(theta, x, y, yerr):
-    T, lnf = theta
-    model = (a/x**5)*(1/((e**(b/(x*T))-1)))
+    a, T, lnf = theta
+    model = (a/x**5)*(1/((np.exp(b/(x*T))-1)))
     inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
@@ -76,18 +78,16 @@ def lnprob(theta, x, y, yerr):
     return lp + lnlike(theta, x, y, yerr)
 
 # Find the maximum likelihood value.
-print([m_true, b_true, np.log(f_true)])
 chi2 = lambda *args: -2 * lnlike(*args)
-result = op.minimize(chi2, [m_true, b_true, np.log(f_true)], args=(x, y, yerr))
-m_ml, b_ml, lnf_ml = result["x"]
+result = op.minimize(chi2, [0,0,0], args=(x, y, yerr))
+a, T_ml, lnf_ml = result["x"]
 print("""Maximum likelihood result:
-    m = {0} (truth: {1})
-    b = {2} (truth: {3})
-    f = {4} (truth: {5})
-""".format(m_ml, m_true, b_ml, b_true, np.exp(lnf_ml), f_true))
+    T = {0} (truth: {1})
+    f = {2} (truth: {3})
+""".format(T_ml, "IDONNO", np.exp(lnf_ml), "IALSODONNO"))
 
 # Plot the maximum likelihood result.
-pl.plot(xl, m_ml*xl+b_ml, "k", lw=2)
+pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ml))-1))), "k", lw=2)
 pl.savefig("line-max-likelihood.png")
 
 # Set up the sampler.

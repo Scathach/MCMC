@@ -40,27 +40,34 @@ pl.tight_layout()
 pl.savefig("line-data.png")
 
 # Do the least-squares fit and compute the uncertainties.
+# X = [A^T C^-1 A]^-1[A^T C^-1 Y]
+#Covariance => [A^T C^-1 A]^-1
 A = np.vstack((np.ones_like(x), x)).T
-C = np.diag(yerr * yerr)
+C = np.diag(yerr * yerr) #covariance
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-T_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
+T_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y.reshape(-1,1))))
+print(A,"this is A")
+print(C,"this is C")
+print(cov,"this is cov")
+print(T_ls)
+
 
 print("""#Least-squares results:
     #T = {0} ± {1} (truth: {2})
-""".format(T_ls[0], np.sqrt(cov[1, 1]), "IDONNOEITHER"))
+""".format(T_ls[1], np.sqrt(cov[1, 1]), "IDONNOEITHER"))
 # Plot the least-squares result.
-pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls[0]))-1))), "--k")
+pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls[1]))-1))), "--k")
 pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
-    a, T, lnf = theta
-    if 0.0 < T < 60000.0 and -10.0 < lnf < 1.0:
+    T = theta
+    if 0.0 < T < 60000.0:
         return 0.0
     return -np.inf
 
 def lnlike(theta, x, y, yerr):
-    a, T, lnf = theta
+    T = theta
     model = (a/x**5)*(1/((np.exp(b/(x*T))-1)))
     inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
@@ -74,11 +81,10 @@ def lnprob(theta, x, y, yerr):
 # Find the maximum likelihood value.
 chi2 = lambda *args: -2 * lnlike(*args)
 result = op.minimize(chi2, [0,0,0], args=(x, y, yerr))
-a, T_ml, lnf_ml = result["x"]
+T_ml = result["x"]
 print("""#Maximum likelihood result:
-    #sT = {0} (truth: {1})
-    #f = {2} (truth: {3})
-""".format(T_ml, "IDONNO", np.exp(lnf_ml), "IALSODONNO"))
+    #T = {0} (truth: {1})
+""".format(T_ml, "IDONNO"))
 
 # Plot the maximum likelihood result.
 pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ml))-1))), "k", lw=2)

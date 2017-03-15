@@ -61,6 +61,7 @@ pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
+    print(theta,"SADASD")
     a, T, lnf = theta
     if 0.0 < T < 60000.0 and -10.0 < lnf < 1.0:
         return 0.0
@@ -131,5 +132,5 @@ T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                                                 axis=0))))
 print(T_mcmc)
 print("""MCMC result:
-    T = {0[0][0]} +{0[0][1]} -{0[0][2]}
+    T = {0[0]} +{0[1]} -{0[2]}
 """.format(T_mcmc))

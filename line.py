@@ -62,7 +62,7 @@ print("""Least-squares results:
 """.format(m_ls, np.sqrt(cov[1, 1]), m_true, b_ls, np.sqrt(cov[0, 0]), b_true))
 
 # Plot the least-squares result.
-print(m_ls*xl+b_ls,"this is it")
+print(m_ls*xl+b_ls,xl,"this is it")
 pl.plot(xl, m_ls*xl+b_ls, "--k")
 pl.savefig("line-least-squares.png")
 

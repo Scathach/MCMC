@@ -28,9 +28,8 @@ k_b = 1.38064852*(10**(-23))  #m^2*kg*s^-2*K^-1
 
 a = 2*h*(c**2)
 b = (h*c)/k_b
-
 # Plot the dataset and the true model.
-xl = np.array([.0001, 10])
+xl = np.array([1, 25])
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
 #pl.plot(xl, m_true*xl+b_true, "k", lw=3, alpha=0.6)
 #pl.ylim(-9, 9)
@@ -42,33 +41,34 @@ pl.savefig("line-data.png")
 # Do the least-squares fit and compute the uncertainties.
 # X = [A^T C^-1 A]^-1[A^T C^-1 Y]
 #Covariance => [A^T C^-1 A]^-1
+
 A = np.vstack((np.ones_like(x), x)).T
 C = np.diag(yerr * yerr) #covariance
 cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-T_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y.reshape(-1,1))))
-print(A,"this is A")
-print(C,"this is C")
-print(cov,"this is cov")
-print(T_ls)
-
+T_ls, f_ls = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
 
 print("""#Least-squares results:
     #T = {0} ± {1} (truth: {2})
-""".format(T_ls[1], np.sqrt(cov[1, 1]), "IDONNOEITHER"))
+""".format(T_ls, np.sqrt(cov[1, 1]), "IDONNOEITHER"))
+
 # Plot the least-squares result.
-pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls[1]))-1))), "--k")
+#print(np.log10((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1)))),xl,"this is it")
+
+pl.plot(xl, np.log10((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1)))), "--k")
+pl.tight_layout()
 pl.savefig("line-least-squares.png")
 
 # Define the probability function as likelihood * prior.
 def lnprior(theta):
-    T = theta
+    T, lnf = theta
     if 0.0 < T < 60000.0:
         return 0.0
     return -np.inf
 
 def lnlike(theta, x, y, yerr):
-    T = theta
-    model = (a/x**5)*(1/((np.exp(b/(x*T))-1)))
+    T, lnf = theta
+    #print(a,b,x,"here it is")
+    model = np.log10((a/x**5)*(1/((np.exp(b/(x*T))-1))))
     inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
@@ -80,19 +80,19 @@ def lnprob(theta, x, y, yerr):
 
 # Find the maximum likelihood value.
 chi2 = lambda *args: -2 * lnlike(*args)
-result = op.minimize(chi2, [0,0,0], args=(x, y, yerr))
+result = op.minimize(chi2, [1000,1], args=(x, y, yerr))
 T_ml = result["x"]
 print("""#Maximum likelihood result:
     #T = {0} (truth: {1})
 """.format(T_ml, "IDONNO"))
 
 # Plot the maximum likelihood result.
-pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ml))-1))), "k", lw=2)
+pl.plot(xl, np.log10((a/xl**5)*(1/((np.exp(b/(xl*T_ml))-1)))), "k", lw=2)
 pl.savefig("line-max-likelihood.png")
 
 
 # Set up the sampler.
-ndim, nwalkers = 3, 100
+ndim, nwalkers = 2, 100
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
 # Clear and run the production chain.
@@ -116,7 +116,7 @@ fig.savefig("line-triangle.png")
 # Plot some samples onto the data.
 pl.figure()
 for T_ls in samples[np.random.randint(len(samples), size=100)]:
-    pl.plot(xl, (a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1))), color="k", alpha=0.1)
+    pl.plot(xl, np.log10((a/xl**5)*(1/((np.exp(b/(xl*T_ls))-1)))), color="k", alpha=0.1)
 #pl.plot(xl, m_true*xl+b_true, color="r", lw=2, alpha=0.8)
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
 pl.xlabel("$x$")
@@ -128,7 +128,7 @@ samples[:] = np.exp(samples[:])
 T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0))))
-print(T_mcmc)
+
 print("""MCMC result:
     T = {0[0][0]} +{0[0][1]} -{0[0][2]}
 """.format(T_mcmc))

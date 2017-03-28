@@ -12,9 +12,6 @@ from matplotlib.ticker import MaxNLocator
 from scipy.optimize import curve_fit
 import random
 
-np.seterr(divide='ignore', invalid='ignore')
-np.seterr(over='ignore', invalid='ignore')
-
 x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])
 y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173])
 yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043])
@@ -84,7 +81,7 @@ print("""#Maximum likelihood result:
 
 
 # Set up the sampler.
-ndim, nwalkers = 2, 1000
+ndim, nwalkers = 2, 100
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))

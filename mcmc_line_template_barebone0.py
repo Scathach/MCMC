@@ -72,17 +72,11 @@ def lnprob(theta, x, y, yerr):
     if not np.isfinite(lp):
         return -np.inf
     return lp + lnlike(theta, x, y, yerr)
-
-bnds = tuple((0,1) for x in start_pos)
-
-
-
+print(T_ls[0])
 
 # Find the maximum likelihood value.
 chi2 = lambda *args: -2 * lnlike(*args)
-
-result = op.minimize(chi2, T_ls, args=(x, y, yerr), bounds= (10,1000))
-#print(result)
+result = op.minimize(chi2, T_ls, args=(x, y, yerr), bounds=((np.log(10),np.log(1000)),(np.log(-100),np.log(1))))
 T_ml = result["x"]
 print("""#Maximum likelihood result:
     #T = {0}
@@ -92,6 +86,7 @@ print("""#Maximum likelihood result:
 # Set up the sampler.
 ndim, nwalkers = 2, 100
 pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
 
 # Clear and run the production chain.

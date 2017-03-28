@@ -3,13 +3,20 @@ import matplotlib.pyplot as plt
 from astropy.io import ascii
 import scipy.constants as con
 
-x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])
-y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173])
-yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043])
+x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
+y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
+yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043]) # errlogf in the mcmc.py file
 
 h = 6.626e-34
 c = 3.0e+8
 k = 1.38e-23
+
+Teffmin = 10.0 #effective temperature minimum
+Teffmax = 1000.0 #effective temperature maximum
+logfacmin = -100.0 #log factor minimum
+logfacmax = 0.0 #log factor maximum
+#theatshape is 2 X 2 array
+thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
 def model(x, T):
     a = 2.0*h*c**2

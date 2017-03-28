@@ -18,18 +18,28 @@ logfacmax = 0.0 #log factor maximum
 #theatshape is 2 X 2 array
 thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
-def model(x, T):
-    a = 2.0*h*c**2
-    b = h*c/(x*k*T)
-    intensity = a/ ( (x**5) * (np.exp(b) - 1.0) )
-    return np.log10(intensity)
+def model(x, T,logfactor):
 
-def log_like(lam,logf,errlogf,theta):
-    residuals = logf - model(lam,theta[0],theta[1])
+    #takes in the wavelength array approximate Temp and the log factor and returns and array of logflux
+    wav = x * 1.0e-6
+    flux = np.empty([len(wav)])
+    logflux = np.empty([len(wav)])
+
+    a = 2.0*h*c**2
+    b = h*c/(wav*k*T)
+    for i in range(len(wav)):
+        a = 2.0*h*c**2
+        b = h*c/(wav[i]*k*T)
+        flux[i] = a/ ( (wav[i]**5) * (np.exp(b) - 1.0) )
+        logflux[i] = logfactor + np.log10(flux[i])
+    return logflux
+
+def log_like(x,logf,errlogf,theta):
+    residuals = logf - model(x,theta[0],theta[1])
     loglike=0.0
-    for i in range(len(lam)):
+    for i in range(len(x)):
         loglike = loglike - np.log(errlogf[i]) - 0.5*(residuals[i]/errlogf[i])**2
-    loglike = loglike - 0.5*len(lam)*np.log(2.0*np.pi)
+    loglike = loglike - 0.5*len(x)*np.log(2.0*np.pi)
     return loglike
 
 def log_prior(theta,thetashape):
@@ -58,3 +68,15 @@ def log_prior(theta,thetashape):
     #logprior = np.sum(logpriors)
 
     return np.sum(logpriors)
+
+# Initialize the MCMC from a random point drawn from the prior
+Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
+logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
+thetachain=np.array([[Teffinitial,logfacinitial]])
+
+# Calculate the associated modified loglike
+loglikechain=np.empty([1])
+loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
+
+
+print(Teffinitial)

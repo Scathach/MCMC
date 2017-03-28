@@ -36,10 +36,9 @@ def planck(wav, T):
     a = 2.0*h*c**2
     b = h*c/(wav*k*T)
     intensity = a/ ( (wav**5) * (np.exp(b) - 1.0) )
-    return log10(intensity)
+    return np.log10(intensity)
 
 # Define the probability function as likelihood * prior.
-
 def lnprior(theta):
     logpriors = np.empty([len(theta)])
     T, lnf = theta
@@ -56,7 +55,15 @@ def lnprior(theta):
 
 def lnlike(theta, x, y, yerr):
     T, lnf = theta
-    #print(theta,x,y,yerr,"here it is")
+
+    h = 6.626e-34
+    c = 3.0e+8
+    k = 1.38e-23
+
+    a = 2.0*h*c**2
+    b = h*c/(x*k*T)
+    model =np.log10( a/ ( (x**5) * (np.exp(b) - 1.0) ))
+
     inv_sigma2 = 1.0/(yerr**2 + planck(x,T)**2*np.exp(2*lnf))
     return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
@@ -66,9 +73,16 @@ def lnprob(theta, x, y, yerr):
         return -np.inf
     return lp + lnlike(theta, x, y, yerr)
 
+bnds = tuple((0,1) for x in start_pos)
+
+
+
+
 # Find the maximum likelihood value.
 chi2 = lambda *args: -2 * lnlike(*args)
-result = op.minimize(chi2, [T_ls,0], args=(x, y, yerr))
+
+result = op.minimize(chi2, T_ls, args=(x, y, yerr), bounds= (10,1000))
+#print(result)
 T_ml = result["x"]
 print("""#Maximum likelihood result:
     #T = {0}

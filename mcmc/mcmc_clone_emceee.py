@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
@@ -42,6 +44,10 @@ def model(x, T,logfactor):
     return logflux
 
 def log_like(x,logf,errlogf,theta):
+    print(theta)
+    print(logf)
+    print(errlogf)
+    print(x)
     residuals = logf - model(x,theta[0],theta[1])
     loglike=0.0
     for i in range(len(x)):

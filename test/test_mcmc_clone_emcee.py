@@ -1,4 +1,4 @@
-from mcmc_clone import model
+from mcmc_test.mcmc_clone import model
 import pytest
 
 import numpy as np
@@ -11,6 +11,10 @@ import corner
 import scipy.optimize as op
 import random
 
-def model_format_test():
+from inspect import signature
 
-    assert model()
+def test_model_format():
+    sig = signature(model)
+    params = sig.parameters
+    print(len(params))
+    assert len(params) == 3

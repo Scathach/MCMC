@@ -70,7 +70,7 @@ def log_prior(theta,thetashape):
 Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
 logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
 thetachain=np.array([[Teffinitial,logfacinitial]])
-print(Teffinitial)
+
 # Calculate the associated modified loglike
 loglikechain=np.empty([1])
 loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(lam,logf,errlogf,thetachain[0])

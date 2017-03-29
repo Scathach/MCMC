@@ -3,6 +3,13 @@ import matplotlib.pyplot as plt
 from astropy.io import ascii
 import scipy.constants as con
 
+import emcee
+import corner
+import scipy.optimize as op
+import random
+
+
+
 x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
 y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
 yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043]) # errlogf in the mcmc.py file
@@ -79,4 +86,34 @@ loglikechain=np.empty([1])
 loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
 
 
-print(Teffinitial)
+def lnprob(theta, x, y, yerr):
+    lp = log_prior(theta,thetashape)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + log_like(theta, x, y, yerr)
+
+
+
+
+ndim, nwalkers = 2, 100
+pos = [[Teffinitial,logfacinitial] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
+
+# Clear and run the production chain.
+print("Running MCMC...")
+sampler.run_mcmc(pos, 500, rstate0=np.random.get_state())
+print("Done.")
+
+# Make the triangle plot.
+burnin = 50
+samples = sampler.chain[:,burnin:, :].reshape((-1, 1))
+# Compute the quantiles.
+samples[:] = np.exp(samples[:])
+T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0))))
+
+print("""MCMC result:
+    T = {0[0][0]} +{0[0][1]} -{0[0][2]}
+""".format(T_mcmc))

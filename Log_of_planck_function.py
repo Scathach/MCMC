@@ -33,6 +33,17 @@ def planck(wav, T):
     intensity = a/ ( (wav**5) * (np.exp(b) - 1.0) )
     return intensity
 
+def model(microns,Teff,logfactor):
+  wavelength = microns*1.0e-6
+  flux=np.empty([len(wavelength)])
+  logflux=np.empty([len(wavelength)])
+  for i in range(len(wavelength)):
+    # Flux is just the Planck function
+    flux[i] = ( (2.0*con.h*con.c**2)/(wavelength[i]**5) )/( np.exp( (con.h*con.c)/(con.k*Teff*wavelength[i]) ) - 1.0 )
+    # So logflux (which is what we want) is just the log of this
+    logflux[i] = logfactor + np.log10(flux[i])
+  return logflux
+
 X = np.linspace(0,25,256,endpoint=True)
 
 T1 = 1500
@@ -42,7 +53,6 @@ T3 = 2000
 Y1_B = (np.log10(planck(X*10**-6,T1)))
 Y2_B = (np.log10(planck(X*10**-6,T2)))
 Y3_B = (np.log10(planck(X*10**-6,T3)))
-
 
 x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])
 y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173])

@@ -44,10 +44,6 @@ def model(x, T,logfactor):
     return logflux
 
 def log_like(x,logf,errlogf,theta):
-    print(theta)
-    print(logf)
-    print(errlogf)
-    print(x)
     residuals = logf - model(x,theta[0],theta[1])
     loglike=0.0
     for i in range(len(x)):
@@ -94,9 +90,11 @@ loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetacha
 
 def lnprob(theta, x, y, yerr):
     lp = log_prior(theta,thetashape)
+
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_like(theta, x, y, yerr)
+    else:
+        return lp + log_like(x, y, yerr, theta)
 
 
 

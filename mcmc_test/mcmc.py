@@ -5,10 +5,10 @@ from astropy.io import ascii
 import scipy.constants as con
 
 # Get the data using the astropy ascii
-data = ascii.read("SED.dat",data_start=4)
-lam=data[0][:]     # Wavelength column
-logf=data[1][:]    # log10(flux)
-errlogf=data[2][:] # Error on log10(flux)
+data = ascii.read("SED.dat", data_start=4)
+lam = data[0][:]      # Wavelength column
+logf = data[1][:]     # log10(flux)
+errlogf = data[2][:]  # Error on log10(flux)
 
 # Shape parameters for priors
 Teffmin = 10.0
@@ -18,6 +18,7 @@ logfacmax = 0.0 #log factor maximum
 thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
 # Set a definition for the model
+# model function creates an array with 6 values of log of flux
 def model(microns,Teff,logfactor):
   wavelength = microns*1.0e-6
   flux=np.empty([len(wavelength)])
@@ -30,6 +31,7 @@ def model(microns,Teff,logfactor):
   return logflux
 
 # Set a definition for the loglikelihood, assuming normally distributed data
+#
 def log_like(lam,logf,errlogf,theta):
     residuals = logf - model(lam,theta[0],theta[1])
     loglike=0.0
@@ -67,14 +69,21 @@ def log_prior(theta,thetashape):
     return np.sum(logpriors)
 
 # Initialize the MCMC from a random point drawn from the prior
-Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
-logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
-thetachain=np.array([[Teffinitial,logfacinitial]])
+# np.random.uniform draws samples from a uniform distribution between low and high values
+# Teffinitial draws a random uniformly distibuted number between the log of minimum and maximum values
+# for the temperature
+# logfacinitial draws a random uniformly distributed value from the minimu and maximum of the log factor
+# thetachain setsup and 2 value array of teffinitial and loffactinitial
+Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]), np.log(thetashape[0][1])) )
+logfacinitial = np.random.uniform(thetashape[1][0], thetashape[1][1])
+thetachain = np.array([[Teffinitial, logfacinitial]])
 
 # Calculate the associated modified loglike
-loglikechain=np.empty([1])
-loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(lam,logf,errlogf,thetachain[0])
 
+loglikechain = np.empty([1])
+loglikechain[0] = log_prior(thetachain[0], thetashape) + log_like(lam, logf, errlogf, thetachain[0])
+print(log_prior(thetachain[0], thetashape))
+print(log_like(lam, logf, errlogf, thetachain[0]))
 # Define the proposal jump size
 Teffjump=5
 logfacjump=0.1
@@ -104,7 +113,7 @@ while True:
 
     if j==jmax:
         break
-
+"""
 
 jlist=np.arange(len(thetachain))
 plt.scatter(thetachain[:,0], thetachain[:,1], c=jlist, cmap='coolwarm')
@@ -175,3 +184,4 @@ plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
 plt.show()
+"""

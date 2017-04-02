@@ -11,7 +11,6 @@ import scipy.optimize as op
 import random
 
 
-
 x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
 y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
 yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043]) # errlogf in the mcmc.py file
@@ -78,6 +77,11 @@ def log_prior(theta,thetashape):
 
     return np.sum(logpriors)
 
+A = np.vstack((np.ones_like(x), x)).T
+C = np.diag(yerr * yerr)
+cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
+
+
 # Initialize the MCMC from a random point drawn from the prior
 Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
 logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
@@ -87,31 +91,30 @@ thetachain=np.array([[Teffinitial,logfacinitial]])
 loglikechain=np.empty([1])
 loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
 
-
 def lnprob(theta, x, y, yerr):
-    lp = log_prior(theta,thetashape)
-
-    if not np.isfinite(lp):
+    loglikechain=np.empty([1])
+    loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
+    if not np.isfinite(loglikechain[0]):
         return -np.inf
     else:
-        return lp + log_like(x, y, yerr, theta)
-
-
+        return loglikechain[0]
 
 
 ndim, nwalkers = 2, 100
 pos = [[Teffinitial,logfacinitial] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
+sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
+
 
 # Clear and run the production chain.
 print("Running MCMC...")
-sampler.run_mcmc(pos, 500, rstate0=np.random.get_state())
+sampler.run_mcmc(pos[0], 500)
 print("Done.")
 
 # Make the triangle plot.
 burnin = 50
-samples = sampler.chain[:,burnin:, :].reshape((-1, 1))
+samples = sampler.chain[burnin:, :].reshape((-1, 1))
+
 # Compute the quantiles.
 samples[:] = np.exp(samples[:])
 T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),

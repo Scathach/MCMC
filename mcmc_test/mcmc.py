@@ -116,8 +116,6 @@ while True:
 
 
 jlist=np.arange(len(thetachain))
-print(thetachain[:,0], "thetachain[:,0]")
-print(thetachain[:,1], "thetachain[:,1]")
 plt.scatter(thetachain[:,0], thetachain[:,1], c=jlist, cmap='coolwarm')
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')

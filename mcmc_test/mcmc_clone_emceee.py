@@ -26,6 +26,8 @@ logfacmax = 0.0 #log factor maximum
 #theatshape is 2 X 2 array
 thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
+cov = np.cov(x,y)
+
 def model(x, T,logfactor):
 
     #takes in the wavelength array approximate Temp and the log factor and returns and array of logflux
@@ -77,11 +79,6 @@ def log_prior(theta,thetashape):
 
     return np.sum(logpriors)
 
-A = np.vstack((np.ones_like(x), x)).T
-C = np.diag(yerr * yerr)
-cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-
-
 # Initialize the MCMC from a random point drawn from the prior
 Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
 logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
@@ -92,31 +89,30 @@ loglikechain=np.empty([1])
 loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
 
 def lnprob(theta, x, y, yerr):
+    lp = log_prior(theta,thetashape)
+
     loglikechain=np.empty([1])
     loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
-    if not np.isfinite(loglikechain[0]):
+    if not np.isfinite(lp):
         return -np.inf
-    else:
-        return loglikechain[0]
 
+    return lp + log_like(x,y,yerr,theta) #loglikechain[0]
 
 ndim, nwalkers = 2, 100
 pos = [[Teffinitial,logfacinitial] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-
 sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
 
 
 # Clear and run the production chain.
 print("Running MCMC...")
-sampler.run_mcmc(pos[0], 500)
+sampler.run_mcmc(pos[0], 5000,rstate0=np.random.get_state())
 print("Done.")
 
 # Make the triangle plot.
-burnin = 50
-samples = sampler.chain[burnin:, :].reshape((-1, 1))
-
+burnin = 500
+samples = sampler.chain[burnin:,:]#.reshape((-1, 2))
 # Compute the quantiles.
-samples[:] = np.exp(samples[:])
+samples[:] #= np.exp(samples[:])
 T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0))))

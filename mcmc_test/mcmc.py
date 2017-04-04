@@ -13,35 +13,27 @@ errlogf = data[2][:]  # Error on log10(flux)
 # Shape parameters for priors
 Teffmin = 10.0
 Teffmax = 1000.0
-logfacmin = -100.0 #log factor minimum
-logfacmax = 0.0 #log factor maximum
-thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
+logfacmin = -100.0  # log factor minimum
+logfacmax = 0.0  # log factor maximum
+thetashape=np.array([[Teffmin, Teffmax], [logfacmin, logfacmax]])
 
 # Set a definition for the model
 # model function creates an array with 6 values of log of flux
-def model(microns,Teff,logfactor):
-  wavelength = microns*1.0e-6
-  flux=np.empty([len(wavelength)])
-  logflux=np.empty([len(wavelength)])
-  for i in range(len(wavelength)):
-    # Flux is just the Planck function
-    flux[i] = ( (2.0*con.h*con.c**2)/(wavelength[i]**5) )/( np.exp( (con.h*con.c)/(con.k*Teff*wavelength[i]) ) - 1.0 )
-    # So logflux (which is what we want) is just the log of this
-    logflux[i] = logfactor + np.log10(flux[i])
-  return logflux
+def model(microns, Teff, logfactor):
+
+    wavelength = microns*1.0e-6
+    flux=np.empty([len(wavelength)])
+    logflux=np.empty([len(wavelength)])
+    for i in range(len(wavelength)):
+        # Flux is just the Planck function
+        flux[i] = ( (2.0*con.h*con.c**2)/(wavelength[i]**5) )/( np.exp( (con.h*con.c)/(con.k*Teff*wavelength[i]) ) - 1.0 )
+        # So logflux (which is what we want) is just the log of this
+        logflux[i] = logfactor + np.log10(flux[i])
+    return logflux
 
 # Set a definition for the loglikelihood, assuming normally distributed data
 #
-def log_like(lam,logf,errlogf,theta):
-    residuals = logf - model(lam,theta[0],theta[1])
-    loglike=0.0
-    for i in range(len(lam)):
-        loglike = loglike - np.log(errlogf[i]) - 0.5*(residuals[i]/errlogf[i])**2
-    loglike = loglike - 0.5*len(lam)*np.log(2.0*np.pi)
-    return loglike
-
-# Set a definition for the logpriors
-def log_prior(theta,thetashape):
+def log_prior(theta, thetashape):
 
     logpriors=np.empty([len(theta)])
     #logprior=0.0
@@ -68,13 +60,22 @@ def log_prior(theta,thetashape):
 
     return np.sum(logpriors)
 
+# Set a definition for the logpriors
+Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]), np.log(thetashape[0][1])) )
+
 # Initialize the MCMC from a random point drawn from the prior
 # np.random.uniform draws samples from a uniform distribution between low and high values
 # Teffinitial draws a random uniformly distibuted number between the log of minimum and maximum values
 # for the temperature
 # logfacinitial draws a random uniformly distributed value from the minimu and maximum of the log factor
 # thetachain setsup and 2 value array of teffinitial and loffactinitial
-Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]), np.log(thetashape[0][1])) )
+def log_like(lam,logf,errlogf,theta):
+    residuals = logf - model(lam,theta[0],theta[1])
+    loglike=0.0
+    for i in range(len(lam)):
+        loglike = loglike - np.log(errlogf[i]) - 0.5*(residuals[i]/errlogf[i])**2
+    loglike = loglike - 0.5*len(lam)*np.log(2.0*np.pi)
+    return loglike
 logfacinitial = np.random.uniform(thetashape[1][0], thetashape[1][1])
 thetachain = np.array([[Teffinitial, logfacinitial]])
 
@@ -112,14 +113,16 @@ while True:
 
     if j==jmax:
         break
-"""
+
 
 jlist=np.arange(len(thetachain))
+print(thetachain[:,0], "thetachain[:,0]")
+print(thetachain[:,1], "thetachain[:,1]")
 plt.scatter(thetachain[:,0], thetachain[:,1], c=jlist, cmap='coolwarm')
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
-plt.show()
-
+plt.savefig("1 Temperatur vs log10(factor) A")
+#plt.show()
 
 np.max(loglikechain)
 
@@ -127,7 +130,8 @@ np.max(loglikechain)
 plt.plot(loglikechain)
 plt.xlabel('Chain number')
 plt.ylabel('loglike')
-plt.show()
+plt.savefig("2 Chain number vs loglike")
+#plt.show()
 
 loglikeburn=np.median(loglikechain)
 j=-1
@@ -143,7 +147,8 @@ jlist=np.arange(len(thetachain))
 plt.scatter(thetachain[burnj:,0], thetachain[burnj:,1], c=jlist[burnj:], cmap='coolwarm',alpha=0.5)
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
-plt.show()
+plt.savefig("3 Temperatur vs log10(factor) B")
+#plt.show()
 print( 'Temperature [K] = ',np.round(np.median(thetachain[burnj:,0]),1),'-',np.round(np.median(thetachain[burnj:,0])-np.percentile(thetachain[burnj:,0],15.9),1),'+',np.round(np.percentile(thetachain[burnj:,0],84.1)-np.median(thetachain[burnj:,0]),1))
 print( 'log10(factor) = ',np.round(np.median(thetachain[burnj:,1]),3),'-',np.round(np.median(thetachain[burnj:,1])-np.percentile(thetachain[burnj:,1],15.9),3),'+',np.round(np.percentile(thetachain[burnj:,1],84.1)-np.median(thetachain[burnj:,1]),3))
 
@@ -154,14 +159,16 @@ plt.plot(thetachain[burnj:,0])
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
-plt.show()
+plt.savefig("4 Check mixing, Temperature A")
+#plt.show()
 
 
 plt.plot(thetachain[burnj:,1])
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
-plt.show()
+plt.savefig("5 Check mixing, log10(factor) A")
+#plt.show()
 
 
 temp=np.empty([len(thetachain)-burnj])
@@ -172,7 +179,8 @@ plt.plot(temp)
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
-plt.show()
+plt.savefig("6 Check mixing, Temperature B")
+#plt.show()
 
 temp=np.empty([len(thetachain)-burnj])
 temp[0]=thetachain[burnj,1]
@@ -182,5 +190,5 @@ plt.plot(temp)
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
-plt.show()
-"""
+plt.savefig("7 Check mixing, log10(factor) B")
+#plt.show()

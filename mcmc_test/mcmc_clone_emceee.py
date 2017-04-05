@@ -111,6 +111,7 @@ print("Done.")
 # Make the triangle plot.
 burnin = 500
 samples = sampler.chain[burnin:,:]#.reshape((-1, 2))
+
 # Compute the quantiles.
 samples[:] #= np.exp(samples[:])
 T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),

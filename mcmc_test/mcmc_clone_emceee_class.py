@@ -91,18 +91,17 @@ class MCMCSetup(object):
             return -np.inf
 
         return lp + self.log_like(x,y,yerr,theta) #loglikechain[0]
+
 MCMC = MCMCSetup()
+
 # Initialize the MCMC from a random point drawn from the prior
 Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
 logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
 thetachain=np.array([[Teffinitial,logfacinitial]])
 
-
-
 ndim, nwalkers = 2, 100
 pos = [[Teffinitial,logfacinitial] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = MCMC.lnprob , args=(x, y, yerr))
-
 
 # Clear and run the production chain.
 print("Running MCMC...")

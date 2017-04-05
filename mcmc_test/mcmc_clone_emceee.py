@@ -106,6 +106,7 @@ sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
 # Clear and run the production chain.
 print("Running MCMC...")
 sampler.run_mcmc(pos[0], 5000,rstate0=np.random.get_state())
+
 print("Done.")
 
 # Make the triangle plot.

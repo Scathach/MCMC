@@ -122,3 +122,13 @@ print("""MCMC result:
     T = {0[0]} +{0[1]} -{0[2]}
     Log Factor = {1[0]} +{1[1]} -{1[2]}
 """.format(T_mcmc, logfac_mcmc))
+
+# ------------------------------------------------------------------------------
+# Ploting MCMC
+plotting_wavelength = np.arange(0.01, 25.0, 0.01)
+
+# Plot the initial guess result.
+print(thetachain)
+plt.errorbar(x, y, yerr=yerr, fmt=".k")
+plt.plot(plotting_wavelength, model(plotting_wavelength,thetachain[0][0],thetachain[0][1]), "k", lw=2)
+plt.savefig("Initial Guess Result.png")

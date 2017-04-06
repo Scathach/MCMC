@@ -31,16 +31,6 @@ y = m_true*x+b_true
 y += np.abs(f_true*y) * np.random.randn(N)
 y += yerr * np.random.randn(N)
 
-
-"""
-y_list.append(y)
-x_list.append(x)
-yerr_list.append(yerr)
-
-print(y_list)
-print(x_list)
-print(yerr_list)
-"""
 # Plot the dataset and the true model.
 xl = np.array([0, 10])
 pl.errorbar(x, y, yerr=yerr, fmt=".k")
@@ -83,6 +73,7 @@ def lnprob(theta, x, y, yerr):
     lp = lnprior(theta)
     if not np.isfinite(lp):
         return -np.inf
+        print(lp + loglikechain[0])
     return lp + lnlike(theta, x, y, yerr)
 
 # Find the maximum likelihood value.

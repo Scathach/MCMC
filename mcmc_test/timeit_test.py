@@ -8,15 +8,14 @@ import numpy as np
 from timeit import Timer
 
 
-
-def fun2():
-    proc = subprocess.Popen(["python","mcmc_clone_emceee"], shell = True)
-    proc.terminate()
-
 def fun():
     proc = subprocess.Popen(["python","mcmc_clone_emceee_class"], shell = True)
     proc.terminate()
 
+def fun2():
+    proc = subprocess.Popen(["python","mcmc_clone_emceee"], shell = True)
+    proc.terminate()
+    
 t = Timer(lambda: fun())
 
 t2 = Timer(lambda: fun2())

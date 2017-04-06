@@ -105,20 +105,20 @@ sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
 
 # Clear and run the production chain.
 print("Running MCMC...")
-sampler.run_mcmc(pos[0], 5000,rstate0=np.random.get_state())
-
+sampler.run_mcmc(pos[0], 5000, rstate0=np.random.get_state())
 print("Done.")
 
 # Make the triangle plot.
 burnin = 500
-samples = sampler.chain[burnin:,:]#.reshape((-1, 2))
+samples = sampler.chain[burnin:,:].reshape((-1, 2))
 
 # Compute the quantiles.
 samples[:] #= np.exp(samples[:])
-T_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+T_mcmc, logfac_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],
                                                 axis=0))))
 
 print("""MCMC result:
-    T = {0[0][0]} +{0[0][1]} -{0[0][2]}
-""".format(T_mcmc))
+    T = {0[0]} +{0[1]} -{0[2]}
+    Log Factor = {1[0]} +{1[1]} -{1[2]}
+""".format(T_mcmc, logfac_mcmc))

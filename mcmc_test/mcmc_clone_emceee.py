@@ -10,6 +10,7 @@ import corner
 import scipy.optimize as op
 import random
 
+import os
 
 x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
 y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
@@ -124,19 +125,22 @@ print("""MCMC result:
 """.format(T_mcmc, logfac_mcmc))
 
 # ------------------------------------------------------------------------------
+dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\emcee_model_graphs"
+os.makedirs(dir_path, exist_ok=True)
+
 # Ploting MCMC
 plotting_wavelength = np.arange(x[0], 25.0, 0.01)
 
 # Plot the initial guess results.
 plt.errorbar(x, y, yerr=yerr, fmt=".r")
 plt.plot(plotting_wavelength, model(plotting_wavelength,samples[0][0],samples[0][1]), "--k", lw=1)
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/Initial Guess Result.png")
+plt.savefig(dir_path+"\Initial Guess Result.png")
 plt.close()
 
 # Plot the MCMC results.
 plt.errorbar(x, y, yerr=yerr,fmt='.r',ms="6")
 plt.plot(plotting_wavelength, model(plotting_wavelength,T_mcmc[0],logfac_mcmc[0]), "--k", lw=1)
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/MCMC results.png")
+plt.savefig(dir_path+"\MCMC results.png")
 plt.close()
 
 # Plot
@@ -144,7 +148,7 @@ jlist=np.arange(len(samples))
 plt.scatter(samples[:,0], samples[:,1], c=jlist, cmap='coolwarm')
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/1B Temp vs logfactor")
+plt.savefig(dir_path+"\\1B Temp vs logfactor.png")
 plt.close()
 
 np.max(samples[:,1])
@@ -153,7 +157,7 @@ np.max(samples[:,1])
 plt.plot(samples[:,1])
 plt.xlabel('Chain number')
 plt.ylabel('loglike')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/2B Chain number vs loglike")
+plt.savefig(dir_path+"\\2B Chain number vs loglike.png")
 #plt.show()
 plt.close()
 
@@ -170,7 +174,7 @@ jlist=np.arange(len(samples))
 plt.scatter(samples[burnj:,0], samples[burnj:,1], c=jlist[burnj:], cmap='coolwarm',alpha=0.5)
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/3B Temperatur vs log10(factor) B")
+plt.savefig(dir_path+"\\3B Temperatur vs log10(factor) B.png")
 #plt.show()
 plt.close()
 
@@ -184,7 +188,7 @@ plt.plot(samples[burnj:,0])
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/4B Check mixing, Temperature A")
+plt.savefig(dir_path+"\\4B Check mixing, Temperature A.png")
 #plt.show()
 plt.close()
 
@@ -193,7 +197,7 @@ plt.plot(samples[burnj:,1])
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/5B Check mixing, log10(factor) A")
+plt.savefig(dir_path+"\\5B Check mixing, log10(factor) A.png")
 #plt.show()
 plt.close()
 
@@ -206,7 +210,7 @@ plt.plot(temp)
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/6B Check mixing, Temperature B")
+plt.savefig(dir_path+"\\6B Check mixing, Temperature B.png")
 #plt.show()
 plt.close()
 
@@ -218,6 +222,6 @@ plt.plot(temp)
 plt.title('Check mixing')
 plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
-plt.savefig("C:/Users/Misha Savchenko/coding/MCMC_Fork/MCMC/mcmc_test/emcee_model/7B Check mixing, log10(factor) B")
+plt.savefig(dir_path+"\\7B Check mixing, log10(factor) B.png")
 #plt.show()
 plt.close()

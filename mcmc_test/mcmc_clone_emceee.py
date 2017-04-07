@@ -125,10 +125,22 @@ print("""MCMC result:
 
 # ------------------------------------------------------------------------------
 # Ploting MCMC
-plotting_wavelength = np.arange(0.01, 25.0, 0.01)
+plotting_wavelength = np.arange(x[0], 25.0, 0.01)
 
-# Plot the initial guess result.
-print(thetachain)
-plt.errorbar(x, y, yerr=yerr, fmt=".k")
-plt.plot(plotting_wavelength, model(plotting_wavelength,thetachain[0][0],thetachain[0][1]), "k", lw=2)
+# Plot the initial guess results.
+plt.errorbar(x, y, yerr=yerr, fmt=".r")
+plt.plot(plotting_wavelength, model(plotting_wavelength,thetachain[0][0],thetachain[0][1]), "--k", lw=1)
 plt.savefig("Initial Guess Result.png")
+plt.close()
+
+# Plot the MCMC results.
+plt.errorbar(x, y, yerr=yerr,fmt='.r',ms="6")
+plt.plot(plotting_wavelength, model(plotting_wavelength,T_mcmc[0],logfac_mcmc[0]), "--k", lw=1)
+plt.savefig("MCMC results.png")
+plt.close()
+
+
+plt.scatter(thetachain[:,0], thetachain[:,1], cmap='coolwarm')
+plt.xlabel('Temperature [K]')
+plt.ylabel('log10(factor)')
+plt.savefig("Temp vs logfactor")

@@ -82,17 +82,17 @@ def log_prior(theta,thetashape):
 # Initialize the MCMC from a random point drawn from the prior
 Teffinitial = np.exp( np.random.uniform(np.log(thetashape[0][0]),np.log(thetashape[0][1])) )
 logfacinitial=np.random.uniform(thetashape[1][0],thetashape[1][1])
-thetachain=np.array([[Teffinitial,logfacinitial]])
+samples=np.array([[Teffinitial,logfacinitial]])
 
 # Calculate the associated modified loglike
 loglikechain=np.empty([1])
-loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
+loglikechain[0]=log_prior(samples[0],thetashape) + log_like(x,y,yerr,samples[0])
 
 def lnprob(theta, x, y, yerr):
     lp = log_prior(theta,thetashape)
 
     loglikechain=np.empty([1])
-    loglikechain[0]=log_prior(thetachain[0],thetashape) + log_like(x,y,yerr,thetachain[0])
+    loglikechain[0]=log_prior(samples[0],thetashape) + log_like(x,y,yerr,samples[0])
     if not np.isfinite(lp):
         return -np.inf
 
@@ -105,7 +105,7 @@ sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
 
 # Clear and run the production chain.
 print("Running MCMC...")
-sampler.run_mcmc(pos[0], 5000, rstate0=np.random.get_state())
+sampler.run_mcmc(pos[0], 10000, rstate0=np.random.get_state())
 print("Done.")
 
 # Make the triangle plot.
@@ -129,7 +129,7 @@ plotting_wavelength = np.arange(x[0], 25.0, 0.01)
 
 # Plot the initial guess results.
 plt.errorbar(x, y, yerr=yerr, fmt=".r")
-plt.plot(plotting_wavelength, model(plotting_wavelength,thetachain[0][0],thetachain[0][1]), "--k", lw=1)
+plt.plot(plotting_wavelength, model(plotting_wavelength,samples[0][0],samples[0][1]), "--k", lw=1)
 plt.savefig("Initial Guess Result.png")
 plt.close()
 
@@ -139,8 +139,85 @@ plt.plot(plotting_wavelength, model(plotting_wavelength,T_mcmc[0],logfac_mcmc[0]
 plt.savefig("MCMC results.png")
 plt.close()
 
-
-plt.scatter(thetachain[:,0], thetachain[:,1], cmap='coolwarm')
+# Plot
+jlist=np.arange(len(samples))
+plt.scatter(samples[:,0], samples[:,1], c=jlist, cmap='coolwarm')
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
-plt.savefig("Temp vs logfactor")
+plt.savefig("1B Temp vs logfactor")
+plt.close()
+
+np.max(samples[:,1])
+
+
+plt.plot(samples[:,1])
+plt.xlabel('Chain number')
+plt.ylabel('loglike')
+plt.savefig("2B Chain number vs loglike")
+#plt.show()
+plt.close()
+
+loglikeburn=np.median(samples[:,1])
+j=-1
+while True:
+    j=j+1
+    if samples[:,1][j] > loglikeburn:
+        break
+burnj=j
+print( 'Burn point = ',burnj)
+
+jlist=np.arange(len(samples))
+plt.scatter(samples[burnj:,0], samples[burnj:,1], c=jlist[burnj:], cmap='coolwarm',alpha=0.5)
+plt.xlabel('Temperature [K]')
+plt.ylabel('log10(factor)')
+plt.savefig("3B Temperatur vs log10(factor) B")
+#plt.show()
+plt.close()
+
+print( 'Temperature [K] = ',np.round(np.median(samples[burnj:,0]),1),'-',np.round(np.median(samples[burnj:,0])-np.percentile(samples[burnj:,0],15.9),1),'+',np.round(np.percentile(samples[burnj:,0],84.1)-np.median(samples[burnj:,0]),1))
+print( 'log10(factor) = ',np.round(np.median(samples[burnj:,1]),3),'-',np.round(np.median(samples[burnj:,1])-np.percentile(samples[burnj:,1],15.9),3),'+',np.round(np.percentile(samples[burnj:,1],84.1)-np.median(samples[burnj:,1]),3))
+
+ascii.write(samples[burnj:,:], "chains.dat")
+
+
+plt.plot(samples[burnj:,0])
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('Temperature [K]')
+plt.savefig("4B Check mixing, Temperature A")
+#plt.show()
+plt.close()
+
+
+plt.plot(samples[burnj:,1])
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('log10(factor)')
+plt.savefig("5B Check mixing, log10(factor) A")
+#plt.show()
+plt.close()
+
+
+temp=np.empty([len(samples)-burnj])
+temp[0]=samples[burnj,0]
+for i in range(burnj+1,len(samples)):
+    temp[i-burnj]=np.mean(samples[burnj:i,0])
+plt.plot(temp)
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('Temperature [K]')
+plt.savefig("6B Check mixing, Temperature B")
+#plt.show()
+plt.close()
+
+temp=np.empty([len(samples)-burnj])
+temp[0]=samples[burnj,1]
+for i in range(burnj+1,len(samples)):
+    temp[i-burnj]=np.mean(samples[burnj:i,1])
+plt.plot(temp)
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('log10(factor)')
+plt.savefig("7B Check mixing, log10(factor) B")
+#plt.show()
+plt.close()

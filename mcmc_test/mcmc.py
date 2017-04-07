@@ -114,22 +114,22 @@ while True:
     if j==jmax:
         break
 
-
 jlist=np.arange(len(thetachain))
 plt.scatter(thetachain[:,0], thetachain[:,1], c=jlist, cmap='coolwarm')
 plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
 plt.savefig("1 Temperatur vs log10(factor) A")
 #plt.show()
+plt.close()
 
 np.max(loglikechain)
-
 
 plt.plot(loglikechain)
 plt.xlabel('Chain number')
 plt.ylabel('loglike')
 plt.savefig("2 Chain number vs loglike")
 #plt.show()
+plt.close()
 
 loglikeburn=np.median(loglikechain)
 j=-1
@@ -147,6 +147,8 @@ plt.xlabel('Temperature [K]')
 plt.ylabel('log10(factor)')
 plt.savefig("3 Temperatur vs log10(factor) B")
 #plt.show()
+plt.close()
+
 print( 'Temperature [K] = ',np.round(np.median(thetachain[burnj:,0]),1),'-',np.round(np.median(thetachain[burnj:,0])-np.percentile(thetachain[burnj:,0],15.9),1),'+',np.round(np.percentile(thetachain[burnj:,0],84.1)-np.median(thetachain[burnj:,0]),1))
 print( 'log10(factor) = ',np.round(np.median(thetachain[burnj:,1]),3),'-',np.round(np.median(thetachain[burnj:,1])-np.percentile(thetachain[burnj:,1],15.9),3),'+',np.round(np.percentile(thetachain[burnj:,1],84.1)-np.median(thetachain[burnj:,1]),3))
 
@@ -159,6 +161,7 @@ plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
 plt.savefig("4 Check mixing, Temperature A")
 #plt.show()
+plt.close()
 
 
 plt.plot(thetachain[burnj:,1])
@@ -167,6 +170,7 @@ plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
 plt.savefig("5 Check mixing, log10(factor) A")
 #plt.show()
+plt.close()
 
 
 temp=np.empty([len(thetachain)-burnj])
@@ -179,6 +183,7 @@ plt.xlabel('Chain number')
 plt.ylabel('Temperature [K]')
 plt.savefig("6 Check mixing, Temperature B")
 #plt.show()
+plt.close()
 
 temp=np.empty([len(thetachain)-burnj])
 temp[0]=thetachain[burnj,1]
@@ -190,3 +195,4 @@ plt.xlabel('Chain number')
 plt.ylabel('log10(factor)')
 plt.savefig("7 Check mixing, log10(factor) B")
 #plt.show()
+plt.close()

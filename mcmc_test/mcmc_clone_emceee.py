@@ -1,5 +1,4 @@
 import sys
-
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
@@ -12,9 +11,12 @@ import random
 
 import os
 
-x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
-y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
-yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043]) # errlogf in the mcmc.py file
+# Get the data using the astropy ascii
+data = ascii.read("SED.dat", data_start=4)
+
+x = data[0][:]      # Wavelength column
+y = data[1][:]     # log10(flux)
+yerr = data[2][:]  # Error on log10(flux)
 
 h = 6.626e-34
 c = 3.0e+8
@@ -24,6 +26,7 @@ Teffmin = 10.0 #effective temperature minimum
 Teffmax = 1000.0 #effective temperature maximum
 logfacmin = -100.0 #log factor minimum
 logfacmax = 0.0 #log factor maximum
+
 #theatshape is 2 X 2 array
 thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
@@ -124,6 +127,28 @@ print("""MCMC result:
     Log Factor = {1[0]} +{1[1]} -{1[2]}
 """.format(T_mcmc, logfac_mcmc))
 
+loglikeburn=np.median(samples[:,1])
+j=-1
+while True:
+    j=j+1
+    if samples[:,1][j] > loglikeburn:
+        break
+burnj=j
+print( 'Burn point = ',burnj)
+
+samples = sampler.chain[burnj:,:].reshape((-1, 2))
+
+# Compute the quantiles.
+samples[:] #= np.exp(samples[:])
+T_mcmc, logfac_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0))))
+
+print("""MCMC result with calculated burn point:
+    T = {0[0]} +{0[1]} -{0[2]}
+    Log Factor = {1[0]} +{1[1]} -{1[2]}
+""".format(T_mcmc, logfac_mcmc))
+
 # ------------------------------------------------------------------------------
 dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\emcee_model_graphs"
 os.makedirs(dir_path, exist_ok=True)
@@ -161,15 +186,6 @@ plt.savefig(dir_path+"\\2B Chain number vs loglike.png")
 #plt.show()
 plt.close()
 
-loglikeburn=np.median(samples[:,1])
-j=-1
-while True:
-    j=j+1
-    if samples[:,1][j] > loglikeburn:
-        break
-burnj=j
-print( 'Burn point = ',burnj)
-
 jlist=np.arange(len(samples))
 plt.scatter(samples[burnj:,0], samples[burnj:,1], c=jlist[burnj:], cmap='coolwarm',alpha=0.5)
 plt.xlabel('Temperature [K]')
@@ -178,8 +194,8 @@ plt.savefig(dir_path+"\\3B Temperatur vs log10(factor) B.png")
 #plt.show()
 plt.close()
 
-print( 'Temperature [K] = ',np.round(np.median(samples[burnj:,0]),1),'-',np.round(np.median(samples[burnj:,0])-np.percentile(samples[burnj:,0],15.9),1),'+',np.round(np.percentile(samples[burnj:,0],84.1)-np.median(samples[burnj:,0]),1))
-print( 'log10(factor) = ',np.round(np.median(samples[burnj:,1]),3),'-',np.round(np.median(samples[burnj:,1])-np.percentile(samples[burnj:,1],15.9),3),'+',np.round(np.percentile(samples[burnj:,1],84.1)-np.median(samples[burnj:,1]),3))
+#print( 'Temperature [K] = ',np.round(np.median(samples[burnj:,0]),1),'-',np.round(np.median(samples[burnj:,0])-np.percentile(samples[burnj:,0],15.9),1),'+',np.round(np.percentile(samples[burnj:,0],84.1)-np.median(samples[burnj:,0]),1))
+#print( 'log10(factor) = ',np.round(np.median(samples[burnj:,1]),3),'-',np.round(np.median(samples[burnj:,1])-np.percentile(samples[burnj:,1],15.9),3),'+',np.round(np.percentile(samples[burnj:,1],84.1)-np.median(samples[burnj:,1]),3))
 
 ascii.write(samples[burnj:,:], "chains.dat")
 

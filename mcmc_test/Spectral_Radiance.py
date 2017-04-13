@@ -10,11 +10,12 @@ from scipy.optimize import curve_fit
 import PyAstronomy
 import subprocess
 from astropy.io import ascii
+import os
 
 np.seterr(divide='ignore', invalid='ignore')
 np.seterr(over='ignore', invalid='ignore')
 
-results = ascii.read("results.dat")
+results = ascii.read(os.path.dirname(os.path.realpath(__file__))+"\\results.dat")
 
 h = 6.626070040*(10**(-34))  #J*s
 c = 299792458 #m/s

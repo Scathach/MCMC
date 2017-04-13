@@ -10,12 +10,13 @@ import random
 import os
 
 # Get the data using the astropy ascii
-data = ascii.read("SED.dat", data_start=4)
+data = ascii.read(os.path.dirname(os.path.realpath(__file__))+"\\SED.dat", data_start=4)
 
 x = data[0][:]      # Wavelength column
 y = data[1][:]     # log10(flux)
 yerr = data[2][:]  # Error on log10(flux)
 
+#Constants
 h = 6.626e-34
 c = 3.0e+8
 k = 1.38e-23
@@ -28,8 +29,12 @@ logfacmax = 0.0 #log factor maximum
 #theatshape is 2 X 2 array
 thetashape=np.array([[Teffmin,Teffmax],[logfacmin,logfacmax]])
 
+
+#Conversion Matrix required for the MHSampler to run
 cov = np.cov(x,y)
 
+
+#Model for the log of the Spectral Radiance
 def model(x, T,logfactor):
 
     #takes in the wavelength array approximate Temp and the log factor and returns and array of logflux
@@ -46,6 +51,7 @@ def model(x, T,logfactor):
         logflux[i] = logfactor + np.log10(flux[i])
     return logflux
 
+#log of likelyhood function
 def log_like(x,logf,errlogf,theta):
     residuals = logf - model(x,theta[0],theta[1])
     loglike=0.0
@@ -54,6 +60,7 @@ def log_like(x,logf,errlogf,theta):
     loglike = loglike - 0.5*len(x)*np.log(2.0*np.pi)
     return loglike
 
+#log of the priors
 def log_prior(theta,thetashape):
 
     logpriors=np.empty([len(theta)])
@@ -90,6 +97,7 @@ samples=np.array([[Teffinitial,logfacinitial]])
 loglikechain=np.empty([1])
 loglikechain[0]=log_prior(samples[0],thetashape) + log_like(x,y,yerr,samples[0])
 
+#log of the probability function
 def lnprob(theta, x, y, yerr):
     lp = log_prior(theta,thetashape)
 
@@ -100,8 +108,11 @@ def lnprob(theta, x, y, yerr):
 
     return lp + log_like(x,y,yerr,theta) #loglikechain[0]
 
+#Set the number of dimensions the MCMC algorithm will look for and the number of walkers
 ndim, nwalkers = 2, 100
+#identify the initial position for MCMC algorithm
 pos = [[Teffinitial,logfacinitial] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+#Set up the sampler function
 sampler = emcee.MHSampler(cov, dim = ndim, lnprobfn = lnprob, args=(x, y, yerr))
 
 
@@ -110,7 +121,7 @@ print("Running MCMC...")
 sampler.run_mcmc(pos[0], 10000, rstate0=np.random.get_state())
 print("Done.")
 
-# Make the triangle plot.
+# Give a generic burning point and choose the sample points used and identify the final result
 burnin = 500
 samples = sampler.chain[burnin:,:].reshape((-1, 2))
 
@@ -125,6 +136,7 @@ print("""MCMC result:
     Log Factor = {1[0]} +{1[1]} -{1[2]}
 """.format(T_mcmc, logfac_mcmc))
 
+# Calculate the bruning point and use it to calculate the final result once again
 loglikeburn=np.median(samples[:,1])
 j=-1
 while True:
@@ -192,9 +204,6 @@ plt.savefig(dir_path+"\\3B Temperatur vs log10(factor) B.png")
 #plt.show()
 plt.close()
 
-#print( 'Temperature [K] = ',np.round(np.median(samples[burnj:,0]),1),'-',np.round(np.median(samples[burnj:,0])-np.percentile(samples[burnj:,0],15.9),1),'+',np.round(np.percentile(samples[burnj:,0],84.1)-np.median(samples[burnj:,0]),1))
-#print( 'log10(factor) = ',np.round(np.median(samples[burnj:,1]),3),'-',np.round(np.median(samples[burnj:,1])-np.percentile(samples[burnj:,1],15.9),3),'+',np.round(np.percentile(samples[burnj:,1],84.1)-np.median(samples[burnj:,1]),3))
-
 ascii.write(samples[burnj:,:], "chains.dat")
 
 
@@ -240,5 +249,6 @@ plt.savefig(dir_path+"\\7B Check mixing, log10(factor) B.png")
 #plt.show()
 plt.close()
 
+#Record the latest MCMC calculation into .dat file
 T_mcmc_array = np.array(T_mcmc)
 ascii.write(T_mcmc_array, "results.dat", names= ("Temperature", "+", "-"))

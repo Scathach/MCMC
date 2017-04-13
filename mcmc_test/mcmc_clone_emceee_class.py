@@ -1,19 +1,20 @@
 import sys
-
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
 import scipy.constants as con
-
 import emcee
 import corner
 import scipy.optimize as op
 import random
+import os
 
+# Get the data using the astropy ascii
+data = ascii.read("SED.dat", data_start=4)
 
-x = np.asarray([3.368,4.618,12.082,22.194,3.6,4.5])   # lam in the mcmc.py file
-y = np.asarray([-18.435,-17.042,-15.728,-16.307,-18.063,-17.173]) # logf in the mcmc.py file
-yerr = np.asarray([0.087,0.087,0.087,0.087,0.043,0.043]) # errlogf in the mcmc.py file
+x = data[0][:]      # Wavelength column
+y = data[1][:]     # log10(flux)
+yerr = data[2][:]  # Error on log10(flux)
 
 h = 6.626e-34
 c = 3.0e+8
@@ -122,3 +123,122 @@ print("""MCMC result:
     T = {0[0]} +{0[1]} -{0[2]}
     Log Factor = {1[0]} +{1[1]} -{1[2]}
 """.format(T_mcmc, logfac_mcmc))
+
+
+loglikeburn=np.median(samples[:,1])
+j=-1
+while True:
+    j=j+1
+    if samples[:,1][j] > loglikeburn:
+        break
+burnj=j
+print( 'Burn point = ',burnj)
+
+samples = sampler.chain[burnj:,:].reshape((-1, 2))
+
+# Compute the quantiles.
+samples[:] #= np.exp(samples[:])
+T_mcmc, logfac_mcmc = list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0))))
+
+print("""MCMC result with calculated burn point:
+    T = {0[0]} +{0[1]} -{0[2]}
+    Log Factor = {1[0]} +{1[1]} -{1[2]}
+""".format(T_mcmc, logfac_mcmc))
+
+# ------------------------------------------------------------------------------
+dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\emcee_model_graphs"
+os.makedirs(dir_path, exist_ok=True)
+
+# Ploting MCMC
+plotting_wavelength = np.arange(x[0], 25.0, 0.01)
+
+# Plot the initial guess results.
+plt.errorbar(x, y, yerr=yerr, fmt=".r")
+plt.plot(plotting_wavelength, MCMC.model(plotting_wavelength,samples[0][0],samples[0][1]), "--k", lw=1)
+plt.savefig(dir_path+"\Initial Guess Result.png")
+plt.close()
+
+# Plot the MCMC results.
+plt.errorbar(x, y, yerr=yerr,fmt='.r',ms="6")
+plt.plot(plotting_wavelength, MCMC.model(plotting_wavelength,T_mcmc[0],logfac_mcmc[0]), "--k", lw=1)
+plt.savefig(dir_path+"\MCMC results.png")
+plt.close()
+
+# Plot
+jlist=np.arange(len(samples))
+plt.scatter(samples[:,0], samples[:,1], c=jlist, cmap='coolwarm')
+plt.xlabel('Temperature [K]')
+plt.ylabel('log10(factor)')
+plt.savefig(dir_path+"\\1B Temp vs logfactor.png")
+plt.close()
+
+np.max(samples[:,1])
+
+
+plt.plot(samples[:,1])
+plt.xlabel('Chain number')
+plt.ylabel('loglike')
+plt.savefig(dir_path+"\\2B Chain number vs loglike.png")
+#plt.show()
+plt.close()
+
+jlist=np.arange(len(samples))
+plt.scatter(samples[burnj:,0], samples[burnj:,1], c=jlist[burnj:], cmap='coolwarm',alpha=0.5)
+plt.xlabel('Temperature [K]')
+plt.ylabel('log10(factor)')
+plt.savefig(dir_path+"\\3B Temperatur vs log10(factor) B.png")
+#plt.show()
+plt.close()
+
+#print( 'Temperature [K] = ',np.round(np.median(samples[burnj:,0]),1),'-',np.round(np.median(samples[burnj:,0])-np.percentile(samples[burnj:,0],15.9),1),'+',np.round(np.percentile(samples[burnj:,0],84.1)-np.median(samples[burnj:,0]),1))
+#print( 'log10(factor) = ',np.round(np.median(samples[burnj:,1]),3),'-',np.round(np.median(samples[burnj:,1])-np.percentile(samples[burnj:,1],15.9),3),'+',np.round(np.percentile(samples[burnj:,1],84.1)-np.median(samples[burnj:,1]),3))
+
+ascii.write(samples[burnj:,:], "chains.dat")
+
+
+plt.plot(samples[burnj:,0])
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('Temperature [K]')
+plt.savefig(dir_path+"\\4B Check mixing, Temperature A.png")
+#plt.show()
+plt.close()
+
+
+plt.plot(samples[burnj:,1])
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('log10(factor)')
+plt.savefig(dir_path+"\\5B Check mixing, log10(factor) A.png")
+#plt.show()
+plt.close()
+
+
+temp=np.empty([len(samples)-burnj])
+temp[0]=samples[burnj,0]
+for i in range(burnj+1,len(samples)):
+    temp[i-burnj]=np.mean(samples[burnj:i,0])
+plt.plot(temp)
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('Temperature [K]')
+plt.savefig(dir_path+"\\6B Check mixing, Temperature B.png")
+#plt.show()
+plt.close()
+
+temp=np.empty([len(samples)-burnj])
+temp[0]=samples[burnj,1]
+for i in range(burnj+1,len(samples)):
+    temp[i-burnj]=np.mean(samples[burnj:i,1])
+plt.plot(temp)
+plt.title('Check mixing')
+plt.xlabel('Chain number')
+plt.ylabel('log10(factor)')
+plt.savefig(dir_path+"\\7B Check mixing, log10(factor) B.png")
+#plt.show()
+plt.close()
+
+T_mcmc_array = np.array(T_mcmc)
+ascii.write(T_mcmc_array, "results.dat", names= ("Temperature", "+", "-"))

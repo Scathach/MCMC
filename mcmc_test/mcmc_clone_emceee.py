@@ -3,12 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
 import scipy.constants as con
-
 import emcee
 import corner
 import scipy.optimize as op
 import random
-
 import os
 
 # Get the data using the astropy ascii
@@ -241,3 +239,6 @@ plt.ylabel('log10(factor)')
 plt.savefig(dir_path+"\\7B Check mixing, log10(factor) B.png")
 #plt.show()
 plt.close()
+
+T_mcmc_array = np.array(T_mcmc)
+ascii.write(T_mcmc_array, "results.dat", names= ("Temperature", "+", "-"))

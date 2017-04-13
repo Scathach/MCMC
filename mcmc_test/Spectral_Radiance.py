@@ -8,9 +8,13 @@ import matplotlib.pyplot as pl
 from matplotlib.ticker import MaxNLocator
 from scipy.optimize import curve_fit
 import PyAstronomy
+import subprocess
+from astropy.io import ascii
 
 np.seterr(divide='ignore', invalid='ignore')
 np.seterr(over='ignore', invalid='ignore')
+
+results = ascii.read("results.dat")
 
 h = 6.626070040*(10**(-34))  #J*s
 c = 299792458 #m/s
@@ -34,20 +38,28 @@ def planck(wav, T):
     intensity = a/ ( (wav**5) * (np.exp(b) - 1.0) )
     return intensity
 
-X = np.linspace(0,3,256,endpoint=True)
+X = np.linspace(0,50,1000,endpoint=True)
 
-Y1_A = (planck(X*10**-6,3000))
-Y2_A = (planck(X*10**-6,4000))
-Y3_A = (planck(X*10**-6,5000))
+T1 = 100
+T2 = 200
+T3 = 300
 
-T1 = 750
-T2 = 1000
-T3 = 1200
+MCMC_Temp = results[0][0]
+
+
+Y1_A = (planck(X*10**-6,T1))
+Y2_A = (planck(X*10**-6,T2))
+Y3_A = (planck(X*10**-6,T3))
+Y4_A = (planck(X*10**-6,MCMC_Temp))
+
 
 plot1, = pl.plot(X,Y1_A, color="red", label=str(T1)+"K")
 plot2, = pl.plot(X,Y2_A, color="green", label=str(T2)+"K")
 plot3, = pl.plot(X,Y3_A, color="blue", label=str(T3)+"K")
-pl.legend([plot1,plot2,plot3],[str(T1)+"K",str(T2)+"K",str(T3)+"K"])
+plot4, = pl.plot(X,Y4_A, color="black", label=str(MCMC_Temp)+"K")
+
+
+pl.legend([plot1,plot2,plot3,plot4],[str(T1)+"K",str(T2)+"K",str(T3)+"K",str(int(MCMC_Temp))+"K"+" MCMC result"])
 pl.xlabel("Wavelength (um)")
 pl.ylabel("Spectral Radiance")
 

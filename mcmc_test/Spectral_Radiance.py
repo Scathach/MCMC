@@ -41,26 +41,30 @@ def planck(wav, T):
 
 X = np.linspace(0,50,1000,endpoint=True)
 
-T1 = 100
-T2 = 200
-T3 = 300
-
+# Temperatures of other Brown Dwarfs used for comparison
 MCMC_Temp = results[0][0]
+T1, T1_name = 227, "WISE 1506+7027"
+T2, T2_name = 450, "WISE 0410+1502"
+T3, T3_name = 350, "WISE 1541−2250"
 
+# temperature and Brown Dwarf decriptions
+T1_description = T1_name + " (" + str(T1)+"K" + ")"
+T2_description = T1_name + " (" + str(T2)+"K" + ")"
+T3_description = T1_name + " (" + str(T3)+"K" + ")"
+MCMC_description = "WISE 0855-0714" + " (" + str(MCMC_Temp)+"K" + ")"
 
-Y1_A = (planck(X*10**-6,T1))
-Y2_A = (planck(X*10**-6,T2))
-Y3_A = (planck(X*10**-6,T3))
-Y4_A = (planck(X*10**-6,MCMC_Temp))
+# Ys used for plotting
+Y1 = (planck(X*10**-6,T1))
+Y2 = (planck(X*10**-6,T2))
+Y3 = (planck(X*10**-6,T3))
+Y4 = (planck(X*10**-6,MCMC_Temp))
 
-
-plot1, = pl.plot(X,Y1_A, color="red", label=str(T1)+"K")
-plot2, = pl.plot(X,Y2_A, color="green", label=str(T2)+"K")
-plot3, = pl.plot(X,Y3_A, color="blue", label=str(T3)+"K")
-plot4, = pl.plot(X,Y4_A, color="black", label=str(MCMC_Temp)+"K")
-
-
-pl.legend([plot1,plot2,plot3,plot4],[str(T1)+"K",str(T2)+"K",str(T3)+"K",str(int(MCMC_Temp))+"K"+" MCMC result"])
+# Plotting the planck function for each brown dwarf
+plot1, = pl.plot(X,Y1, color="red", label=T1_description )
+plot2, = pl.plot(X,Y2, color="green", label=T2_description )
+plot3, = pl.plot(X,Y3, color="blue", label=T3_description )
+plot4, = pl.plot(X,Y4, color="black", label=MCMC_description )
+pl.legend([plot1,plot2,plot3,plot4],[T1_description, T2_description, T3_description, MCMC_description])
 pl.xlabel("Wavelength (um)")
 pl.ylabel("Spectral Radiance")
 
